@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fluid Glass Hover</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .glass-surface {
+            position: relative;
+            overflow: hidden;
+            transition: opacity 260ms ease-out;
+            backdrop-filter: blur(12px) saturate(1.5) brightness(0.5);
+            -webkit-backdrop-filter: blur(12px) saturate(1.5) brightness(0.5);
+            background: rgba(10, 25, 47, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.03),
+                        inset 0 -1px 0 0 rgba(0, 0, 0, 0.2),
+                        0 8px 32px 0 rgba(0, 0, 0, 0.2);
+        }
+        .glass-surface::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(0,0,0,0.1) 100%);
+            pointer-events: none;
+        }
+        .glass-filter-layer {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white overflow-hidden">
+    <div class="h-screen flex items-center justify-center relative">
+        <div id="fluid-glass" class="glass-surface w-20 h-20 rounded-full absolute">
+            <svg class="glass-filter-layer" xmlns="http://www.w3.org/2000/svg">
+                <defs></defs>
+            </svg>
+        </div>
+        <div class="text-center">
+            <h1 class="text-4xl font-bold mb-4">Hover Effect Demo</h1>
+            <p class="text-gray-400">Move your mouse to see the fluid glass lens follow.</p>
+        </div>
+    </div>
+    <script>
+        const glass = document.getElementById('fluid-glass');
+        const svg = glass.querySelector('svg');
+        const defs = svg.querySelector('defs');
+
+        // Setup SVG filter for liquid glass effect
+        const filterId = 'fluid-glass-filter';
+        const svgContent = `
+            <svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="red-grad" x1="100%" y1="0%" x2="0%" y2="0%">
+                        <stop offset="0%" stop-color="#0000"/>
+                        <stop offset="100%" stop-color="red"/>
+                    </linearGradient>
+                    <linearGradient id="blue-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#0000"/>
+                        <stop offset="100%" stop-color="blue"/>
+                    </linearGradient>
+                </defs>
+                <rect x="0" y="0" width="80" height="80" fill="black"></rect>
+                <rect x="0" y="0" width="80" height="80" rx="40" fill="url(#red-grad)" />
+                <rect x="0" y="0" width="80" height="80" rx="40" fill="url(#blue-grad)" style="mix-blend-mode: difference" />
+                <rect x="4" y="4" width="72" height="72" rx="36" fill="hsl(0 0% 50% / 0.93)" style="filter:blur(15px)" />
+            </svg>
+        `;
+
+        defs.innerHTML = `
+            <filter id="${filterId}" colorInterpolationFilters="sRGB" x="0%" y="0%" width="100%" height="100%">
+                <feImage href="data:image/svg+xml,${encodeURIComponent(svgContent)}" x="0" y="0" width="100%" height="100%" preserveAspectRatio="none" result="map" />
+                <feDisplacementMap in="SourceGraphic" in2="map" scale="-220" xChannelSelector="R" yChannelSelector="G" result="dispRed" />
+                <feColorMatrix in="dispRed" type="matrix" values="1 0 0 0 0, 0 0 0 0 0, 0 0 0 0 0, 0 0 0 1 0" result="red" />
+                <feDisplacementMap in="SourceGraphic" in2="map" scale="-210" xChannelSelector="R" yChannelSelector="G" result="dispGreen" />
+                <feColorMatrix in="dispGreen" type="matrix" values="0 0 0 0 0, 0 1 0 0 0, 0 0 0 0 0, 0 0 0 1 0" result="green" />
+                <feDisplacementMap in="SourceGraphic" in2="map" scale="-200" xChannelSelector="R" yChannelSelector="G" result="dispBlue" />
+                <feColorMatrix in="dispBlue" type="matrix" values="0 0 0 0 0, 0 0 0 0 0, 0 0 1 0 0, 0 0 0 1 0" result="blue" />
+                <feBlend in="red" in2="green" mode="screen" result="rg" />
+                <feBlend in="rg" in2="blue" mode="screen" result="output" />
+                <feGaussianBlur in="output" stdDeviation="1.0" />
+            </filter>
+        `;
+
+        glass.style.backdropFilter = `url(#${filterId}) saturate(1)`;
+
+        // Mouse follow behavior based on React code logic
+        let targetX = window.innerWidth / 2;
+        let targetY = window.innerHeight / 2;
+        let currentX = targetX;
+        let currentY = targetY;
+        const easing = 0.15; // Adjusted for smooth following like the React component
+
+        function animate() {
+            currentX += (targetX - currentX) * easing;
+            currentY += (targetY - currentY) * easing;
+            glass.style.transform = `translate(${currentX}px, ${currentY}px) translate(-50%, -50%)`;
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+
+        window.addEventListener('mousemove', (e) => {
+            // Normalize pointer position like in React Three Fiber
+            const normalizedX = (e.clientX / window.innerWidth) * 2 - 1;
+            const normalizedY = -(e.clientY / window.innerHeight) * 2 + 1;
+            // Scale to viewport
+            targetX = normalizedX * (window.innerWidth / 2);
+            targetY = normalizedY * (window.innerHeight / 2);
+        });
+
+        // Resize handling
+        window.addEventListener('resize', () => {
+            // Recalculate filter if needed, but for simplicity, keep as is
+        });
+    </script>
+</body>
+</html>
