@@ -2,6 +2,8 @@
 
 A modern, interactive portfolio website featuring a custom "Portfolio OS" boot animation and glass-morphism design elements. Showcasing projects, education, and professional experience with a sleek, tech-forward aesthetic.
 
+🔗 **[View Live Demo](https://lawrencedevportfolio.vercel.app)**
+
 ## ✨ Features
 
 - **Custom Boot Loader** - Matrix-style loading animation with system-inspired UI
