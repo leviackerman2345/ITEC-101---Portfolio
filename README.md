@@ -1,4 +1,4 @@
-﻿# Christian De Goma Portfolio
+# Christian De Goma Portfolio
 
 A modern, interactive portfolio website featuring a custom "Portfolio OS" boot animation and glass-morphism design elements. Showcasing projects, education, and professional experience with a sleek, tech-forward aesthetic.
 
